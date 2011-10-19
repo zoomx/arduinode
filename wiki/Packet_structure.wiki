@@ -8,4 +8,4 @@ This is the packet format used by arduinode.
 ||<b>DATA</b>||length||toAddr||fromAddr||pkttype||data||
 ||<b>INID</b>||length||toAddr||fromAddr||INID||nodeKey||ID(a)||ID(b)||ID(n)||
 ||<b>ANID</b>||length||toAddr||fromAddr||ANID||newID||nodeKey||ID(a)||ID(b)||ID(n)||
-||<b>rxbuff [ ]</b>||[0]||[1]||[2]||[3]||[4]||[5]||[6]||[7]||8||
+||<b>rxbuff [ ]</b>||0||1||2||3||4||5||6||7||8||
