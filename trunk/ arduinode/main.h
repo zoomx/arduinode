@@ -17,7 +17,7 @@
 #include <avr/interrupt.h>
 #include <avr/signal.h>
 #include <stdlib.h>
-#include <pt.h>
+#include <../pt/pt.h>
 #include "config.h"
 
 #define CLR(x,y) (x&=(~(1<<y)))
