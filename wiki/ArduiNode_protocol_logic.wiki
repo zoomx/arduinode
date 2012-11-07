@@ -13,6 +13,6 @@ The master node acts as a base station, all packets in the network are routed to
 
 ==Master vs Slave nodes==
 Besides routing, there are some more differences between the two node types:
-* Master nodes always send BEACONs, slave only if they have a valid ID. 
-* Only master nodes allocate new IDs.
-* If a DATA packet arrives at a slave node it will try to forward it to a node which is nearer to the master or the master itself. A master node will not forward DATA.
+ * Master nodes always send BEACONs, slave only if they have a valid ID. 
+ * Only master nodes allocate new IDs.
+ * If a DATA packet arrives at a slave node it will try to forward it to a node which is nearer to the master or the master itself. A master node will not forward DATA.
