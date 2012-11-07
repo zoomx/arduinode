@@ -1,6 +1,6 @@
 #summary How the arduiNode protocol logic works
 
-=ArduiNode protocol=
+=ArduiNode  protocol=
 CAPITALIZED words refer to #defines in the arduiNode source code.
 
 ==Beacon==
