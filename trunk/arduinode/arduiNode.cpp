@@ -18,14 +18,14 @@ boolean NODETYPE;
 // static struct pt pt_rcvPkt;
 
 // Global variables for the driver
-bool NEWRXDATA, NEWPACKETRECEIVED, NODE_IR_ACTIVE, PHY_CHANNEL_FREE;
+bool NODE_IR_ACTIVE, PHY_CHANNEL_FREE;
 
 void arduiNodeSetup(boolean NODETYP) {
   NODETYPE = NODETYP;
   IR_INIT_PT_RCV();		// init proto rcv var called in isr
   init_pt_snd();		// init proto snd var...
   #if SERIALCONSOLE
-  Serial.print("superNode v0.1");
+  Serial.print("arduiNode 1.0");
   #endif
   if(NODETYPE == MASTER) {
     myself.id  = 1;
@@ -53,7 +53,11 @@ void arduiNodeSetup(boolean NODETYP) {
   
   RXTX_DRIVER_INIT();
   
-  
+  setupScheduler();
+}
+
+void arduiNodeSetID(unsigned char id) {
+	myself.id = id;
 }
 
 

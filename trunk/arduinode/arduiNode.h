@@ -19,8 +19,10 @@
 #include "mac.h"
 #include "routing.h"
 #include "transport.h"
+#include "scheduler.h"
 
-extern bool NEWRXDATA, NEWPACKETRECEIVED, NODE_IR_ACTIVE, PHY_CHANNEL_FREE;
+
+extern bool NODE_IR_ACTIVE, PHY_CHANNEL_FREE;
 
 
 /************************************************************************
@@ -34,6 +36,6 @@ void arduiNodeSetup(unsigned char NODETYPE);
  * turn the status led on or off					*
  ************************************************************************/
 void statusLED(unsigned char led);
-
+void arduiNodeSetID(unsigned char id);
 
 #endif
