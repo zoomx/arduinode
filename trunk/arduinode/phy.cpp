@@ -23,12 +23,12 @@ void phySendPacket(unsigned char to, unsigned char from, unsigned char type, uns
   enableIROut(38);
 //   PORTB |= 1;			// led on
 //  BufferIn(STARTSYMBOL);
-  BufferIn(length + 4);	// add one for the pkt length info
-  BufferIn(to);
-  BufferIn(from);
-  BufferIn(type);
+  TXBufferIn(length + 4);	// add one for the pkt length info
+  TXBufferIn(to);
+  TXBufferIn(from);
+  TXBufferIn(type);
   for(unsigned char i=0; i<length; i++) {
-    BufferIn(data[i]);	// send i data bytes
+    TXBufferIn(data[i]);	// send i data bytes
   }
   // FIXME send buffer direct
 //   closeConnection();		// enable ir rcv
@@ -38,8 +38,8 @@ void phySendPacket(unsigned char to, unsigned char from, unsigned char type, uns
 
 void printPkt() {
   unsigned char i = 0; // start with pkt length
-  while(i < readBufferIndex(0) && i < RXTX_BUFFER_SIZE) {
-    Serial.print(readBufferIndex(i), HEX);
+  while(i < readBufferIndex(0, RXBUFFER) && i < RXTX_BUFFER_SIZE) {
+    Serial.print(readBufferIndex(i, RXBUFFER), HEX);
     Serial.print(" ");
     i++;
   }

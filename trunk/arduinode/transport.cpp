@@ -11,81 +11,90 @@
 #include "transport.h"
 #include "driver/rxtx_driver.h"
 
-unsigned char NEWDATA, PINGED;
 
+
+volatile unsigned char NEWRXDATA, NEWPACKETRECEIVED, NEWDATA, PINGED, NEWACK, NEWCTS;
 
 /****************************************************************************
 * THE key function. Incoming packets are ordered by the specific           *
 * packet type and the corresponding functions to process the given event    *
 * are called. Handles all the protocol logic                                *
 *****************************************************************************/
-void pktDaemon() {
+static unsigned long pdt, rsttime;	// packet deamon time
+static unsigned char dataToSend;
+bool pktDaemon() {
+   INT_OFF();  // makro all interrupts are deactivated
 
-    INT_OFF();  // makro all interrupts are deactivated
-    
-    #if RAWMODE
-    Serial.print(" ->PKT:");  
-    //     printPkt();
-    #endif
-    // ? if(RX_NODE_FROM == myself.id)
-        
-        
-    if(NEWRXDATA && ( (myself.id == 0 && RX_PACKETTYPE == ANID) || RX_NODE_TO == myself.id || RX_NODE_TO == BROADCASTADDR) ) {   // check if the received pkt is for me or broadcast or ANID for me
+
+    if(NEWRXDATA && ( (myself.id == 0 && RX_PACKETTYPE == ANID) || RX_NODE_TO == myself.id || RX_NODE_TO == BROADCASTADDR)) {
+   // check if the received pkt is for me or broadcast or ANID for me
             NEWPACKETRECEIVED = true;
-    }
+    }   
+    #if RAWMODE
     else {
-        #if RAWMODE
         Serial.print(" ->PNFM");    // pkt not for me
         printPkt();
-        #endif
     }
+    #endif
 
-static unsigned long pdt, rsttime;	// packet deamon time
-static unsigned int sched;
-static unsigned char pktLength, dataToSend;
-
-// update the timer
-if(millis() - pdt > 1) {
-    pdt = millis();
-    sched++;
-}
 
 if(NEWPACKETRECEIVED) { 	// FIXME check if pkt is valid
         NEWPACKETRECEIVED = false;
         NEWRXDATA = false;
-        pktLength = readBufferIndex(0);        
-
         switch(RX_PACKETTYPE) { 
         case PING:
             #if CONNECTDEBUGMODUS
             Serial.print(" ->PING");
             #endif
-            sendHeader(4, readBufferIndex(2), ACK);	// answer with an ACK pkt
-            dataToSend = true;
+            sendHeader(4, RX_NODE_FROM, ACK);	// answer with an ACK pkt
+            SENDBUFFER();
             break;
 
         case RTS:
             #if CONNECTDEBUGMODUS
             Serial.print(" ->RTS");
             #endif
-            sendHeader(4, readBufferIndex(2), CTS);	// answer with a CTS pkt
-            dataToSend = true;
+	   // delay(5);	// FIXME
+            sendHeader(4, RX_NODE_FROM, CTS);	// answer with a CTS pkt
+	    	SENDBUFFER();
+	    #if CONNECTDEBUGMODUS
+            Serial.print(" <-CTS");
+            #endif
             break;
-
+	
+        case CTS:
+	    NEWCTS = true;
+            #if CONNECTDEBUGMODUS
+            Serial.print(" ->CTS");
+            #endif
+            break;
+	
+	case ACK:
+	    NEWACK = true;
+            #if CONNECTDEBUGMODUS
+            Serial.print(" ->ACK");
+            #endif
+            break;
+	
         case DATA:
             #if CONNECTDEBUGMODUS
-            Serial.println(" ->DATA");
+            Serial.print(" ->DATA");
             #endif
-            //delay(2);	// FIXME
-            sendHeader(4, readBufferIndex(2), ACK);	// answer with an ACK pkt
+            //delay(5);	// FIXME
+            sendHeader(4, RX_NODE_FROM, ACK);	// answer with an ACK pkt
+	    SENDBUFFER();
+	    #if CONNECTDEBUGMODUS
+            Serial.print(" <-ACK");
+            #endif
+
             // if the node is not a master relay the data pkt
             // FIXME check not to send a pkt back to the node it came from to prevent loops
             if (NODETYPE == SLAVE) {
-                sendHeader(pktLength, nextNodes[0].id, DATA);	
-                for(unsigned char i=4; i<pktLength; i++) {
-                    BufferIn(readBufferIndex(i));	// relay content of the pkt
+                sendHeader(RX_PACKET_LENGTH, nextNodes[0].id, DATA);	
+                for(unsigned char i=4; i<RX_PACKET_LENGTH; i++) {
+                    TXBufferIn(readBufferIndex(i, RXBUFFER));	// relay content of the pkt
                 }
-                dataToSend = true;
+                 SENDBUFFER();
                 #if CONNECTDEBUGMODUS
                 Serial.print(" RLY:");
                 printPkt();
@@ -94,7 +103,7 @@ if(NEWPACKETRECEIVED) { 	// FIXME check if pkt is valid
             else {	// NODETYPE == MASTER
                 NEWDATA = true;
                 #if DEBUGMODUS
-                	Serial.print("Got Data");
+                	Serial.println("Got Data");
                 //	printPkt();
                 #endif
             }
@@ -106,13 +115,15 @@ if(NEWPACKETRECEIVED) { 	// FIXME check if pkt is valid
             if(!timestamp) {
                  timestamp = millis();
             }
-            mangageNextNodes(readBufferIndex(2), readBufferIndex(4));
+            mangageNextNodes(RX_NODE_FROM, RX_DATABYTE_1);
             #if CONNECTDEBUGMODUS
             Serial.print(" ->BC[");
-            Serial.print(readBufferIndex(2), DEC);		
+            Serial.print(RX_NODE_FROM, DEC);		
             Serial.print("|");
-            Serial.print(readBufferIndex(4), DEC);
-            Serial.print("]");
+            Serial.print(RX_DATABYTE_1, DEC);
+            Serial.println("]");
+	    #endif
+	    #if IDDEBUG
             printNodes();
             #endif
         break;
@@ -131,36 +142,34 @@ if(NEWPACKETRECEIVED) { 	// FIXME check if pkt is valid
             #endif
             #if BYTEDEBUGMODUS
             Serial.print(" TSrqst:");
-            Serial.print(readBufferIndex(4),HEX);	// print out the timestamp (=key) associated with INID request
+            Serial.print(RX_DATABYTE_1,HEX);	// print out the timestamp (=key) associated with INID request
             #endif
-            // readBufferIndex(pktLength -1) is the ID of the next node in the chain back to the node which requested the new ID
+            // readBufferIndex(RX_PACKET_LENGTH -1) is the ID of the next node in the chain back to the node which requested the new ID
             // if the master node receives a INID pkt, it responds with an ANID
-            if (NODETYPE == MASTER) {
-                sendHeader(pktLength +1, 0, ANID);	// process request for a new ID
-                BufferIn(allocateID());	// a freshly generated ID is also sent back
-                Serial.println(" lese key aus");
-                for(unsigned char i=4; i<pktLength; i++) {
-                    BufferIn(readBufferIndex(i));	// relay content of the pkt
-                }
-                Serial.println(" ok");
-                dataToSend = true;
-                #if CONNECTDEBUGMODUS
-                Serial.print(" <-ANID");
-                #endif
-            }
-            else {	// NODETYPE == SLAVE
-                // the receiving node is not the master node, so the INID pkt has to be relayed
-                sendHeader((pktLength +1), nextNodes[0].id, INID);	
-                for(unsigned char i=4; i<pktLength; i++) {
-                    BufferIn(readBufferIndex(i));	// relay content of the pkt
-            }
-            BufferIn(myself.id);	// attach nodes own id to the pkt
-            dataToSend = true;
-            #if CONNECTDEBUGMODUS
-            Serial.print(" RLY:");
-            printPkt();
-            #endif
-            }
+		if (NODETYPE == MASTER) {
+			sendHeader(RX_PACKET_LENGTH +1, 0, ANID);	// process request for a new ID
+			TXBufferIn(allocateID());	// a freshly generated ID is also sent back
+			for(unsigned char i=4; i<RX_PACKET_LENGTH; i++) {
+			    TXBufferIn(readBufferIndex(i, RXBUFFER));	// relay content of the pkt
+			}
+			SENDBUFFER();
+			#if CONNECTDEBUGMODUS
+			Serial.print(" <-ANID");
+			#endif
+		}
+		else {	// NODETYPE == SLAVE
+			// the receiving node is not the master node, so the INID pkt has to be relayed
+			sendHeader((RX_PACKET_LENGTH +1), nextNodes[0].id, INID);	
+			for(unsigned char i=4; i<RX_PACKET_LENGTH; i++) {
+			    TXBufferIn(readBufferIndex(i, RXBUFFER));	// relay content of the pkt
+			}
+			TXBufferIn(myself.id);	// attach nodes own id to the pkt
+			SENDBUFFER();
+			#if CONNECTDEBUGMODUS
+			Serial.print(" RLY:");
+			printPkt();
+			#endif
+		}
         break;
 
         // 	ANID = Allocated New ID
@@ -170,18 +179,18 @@ if(NEWPACKETRECEIVED) { 	// FIXME check if pkt is valid
             Serial.print(" ->ANID");
             #endif
             if(myself.id) {	// id != 0 means the ANID can't be for me, so forward the pkt
-                sendHeader(pktLength -1, pktLength -1, ANID);	// process request for a new ID
-                for(unsigned char i=4; i<pktLength-1; i++) {
-                    BufferIn(readBufferIndex(i));	// relay content of the pkt
+                sendHeader(RX_PACKET_LENGTH -1, RX_PACKET_LENGTH -1, ANID);	// process request for a new ID
+                for(unsigned char i=4; i<RX_PACKET_LENGTH-1; i++) {
+                    TXBufferIn(readBufferIndex(i, RXBUFFER));	// relay content of the pkt
             }
-            dataToSend = true;
+             SENDBUFFER();
             #if DEBUGMODUS
             Serial.print(" RLY:");
             printPkt();
             #endif
             }
-            else if(readBufferIndex(5) == timestamp){	// it's the right key, the ANID is for me!
-                myself.id = readBufferIndex(4);		// ID allocated from master node
+            else if(readBufferIndex(5, RXBUFFER) == timestamp){	// it's the right key, the ANID is for me!
+                myself.id = readBufferIndex(4, RXBUFFER);		// ID allocated from master node
                 #if CONNECTDEBUGMODUS
                 Serial.print(" gotID:");
                 Serial.print(myself.id,DEC);
@@ -189,62 +198,73 @@ if(NEWPACKETRECEIVED) { 	// FIXME check if pkt is valid
             }
             #if DEBUGMODUS
             Serial.print(" ->ANID key:");
-            Serial.print(readBufferIndex(5),DEC);
+            Serial.print(readBufferIndex(5, RXBUFFER),DEC);
             Serial.print("myKey:");
             Serial.print(timestamp,DEC);
             #endif
         break;
         #endif 	// USESTATICID
         }   // switch
-        printBuffer();
-        flushBuffer(RX_PACKET_LENGTH);
-       	if(dataToSend) {
-	    dataToSend = false;
-	    SENDBUFFER();
-	}
-        
+        flushRXBuffer(RX_PACKET_LENGTH); 
     }
-   /** 
-    // FIXME implement scheduler
-    if(sched > 3000) {	// send beacon or INID 
-        sched = 0;
+        //~ // FIXME packe das in den IR treiber
+    //~ if(NODE_IR_ACTIVE) {
+      	//~ closeConnection();	// enable receiving pkt again	
+	//~ enable_IR_rx();
+ 	//~ NODE_IR_ACTIVE = false;
+    //~ }
+    INT_ON();
+    return false;	// always return false, this is needed because this function is called in the sendData function
+}
+
+void manageNetwork() {// send beacon or INID 
+	if(!PHY_CHANNEL_FREE) {
+		Serial.print("CHNBSY");
+		return;
+	}
+	if(myself.id) {	// node has a valid ID, send a beacon
+		sendHeader(5, BROADCASTADDR, BEACON);
+		TXBufferIn(myself.htm);
+		SENDBUFFER();
+		#if CONNECTDEBUGMODUS
+		Serial.print(" <-BC");
+		Serial.print("<");
+		Serial.print(myself.id,DEC);
+		Serial.print("|");
+		Serial.print(myself.htm,DEC);
+		Serial.println("> ");
+		#endif
+	}
         if (NODETYPE == SLAVE) {
             if(timestamp) { // become active if other nodes are out there
-            #if DEBUGMODUS
-            Serial.print(" pktCnt:");
-            Serial.print(pktCnt);	
-            Serial.print(" errCnt:");
-            Serial.print(errorCnt);
-            #endif
             #if !USESTATICID
             static unsigned char WFR = false;
             if(myself.id == 0 && myself.htm != 255) { 	//node needs an ID, contact to other nodes exist
-            #if CONNECTDEBUGMODUS
-            Serial.print(" rqstID");
-            #endif
-            if(!WFR) {	// WFR = waiting for response
-                rsttime = millis();
-                //timestamp taken when receiving first BC
-                WFR = true;
-                // FIXME send rts first
-              
-                sendHeader(5, nextNodes[0].id, INID);	// send INID Header
-                BufferIn(timestamp);	// send UID key
-//                 BufferIn(77);    
-                SENDBUFFER();
-                #if DEBUGMODUS
-                Serial.print(" INIDkey:");
-                Serial.print(timestamp,DEC);
-                #endif
-            }
-            if(millis() - rsttime > PKTTIMEOUT * myself.htm) {
-                WFR = false;
-                timestamp = 0;
-                #if CONNECTDEBUGMODUS
-                Serial.print(" INID RST");
-                #endif
-            }
-            }
+		    #if CONNECTDEBUGMODUS
+		    Serial.print(" rqstID");
+		    #endif
+		    if(!WFR) {	// WFR = waiting for response
+			rsttime = millis();
+			//timestamp taken when receiving first BC
+			WFR = true;
+			// FIXME send rts first
+		      
+			sendHeader(5, nextNodes[0].id, INID);	// send INID Header
+			TXBufferIn(timestamp);	// send UID key
+			SENDBUFFER();
+			#if DEBUGMODUS
+			Serial.print(" INIDkey:");
+			Serial.print(timestamp,DEC);
+			#endif
+		    }
+		    if(millis() - rsttime > PKTTIMEOUT * myself.htm) {
+			WFR = false;
+			timestamp = 0;
+			#if CONNECTDEBUGMODUS
+			Serial.print(" INID RST");
+			#endif
+		    }
+		}
             #endif
            }
         }
@@ -256,26 +276,21 @@ if(NEWPACKETRECEIVED) { 	// FIXME check if pkt is valid
         	Serial.println(" noID");
         }
         #endif
-        if(myself.id) {	// node has a valid ID, send a beacon
-		sendHeader(5, BROADCASTADDR, BEACON);
-		BufferIn(myself.htm);
-		SENDBUFFER();
-		#if CONNECTDEBUGMODUS
-		Serial.print(" <-BC");
-		Serial.print("<");
-		Serial.print(myself.id,DEC);
-		Serial.print("|");
-		Serial.print(myself.htm,DEC);
-		Serial.println("> ");
-		#endif
-        }
-    }
-**/
+
     // FIXME packe das in den IR treiber
-    if(NODE_IR_ACTIVE) {
-      	//closeConnection();	// enable receiving pkt again	
-	enable_IR_rx();
- 	NODE_IR_ACTIVE = false;
-    }
-    INT_ON();
+    //~ if(NODE_IR_ACTIVE) {
+      	//~ //closeConnection();	// enable receiving pkt again	
+	//~ enable_IR_rx();
+ 	//~ NODE_IR_ACTIVE = false;
+    //~ }
+
+}
+
+void printPacketStatus() {
+            #if PRINTPACKETSTATS
+            Serial.print(" pktCnt:");
+            Serial.print(pktCnt);	
+            Serial.print(" errCnt:");
+            Serial.println(errorCnt);
+            #endif
 }

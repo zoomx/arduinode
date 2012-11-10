@@ -58,6 +58,7 @@
 #endif
 
 #define RFM12_UART_DEBUG   23
+#define RFM12_NOCOLLISIONDETECTION 0
 
 //! This controls the library internal state machine.
 volatile uint8_t rfm12_state;
@@ -108,7 +109,7 @@ void rfm12_poll()
                 bytecount = 1;  // the first byte was already read
                 
                 // FIXME check if buffer free
-                BufferIn(num_bytes);    // put it to the fifo
+                RXBufferIn(num_bytes);    // put it to the fifo
 
                 #if RFM12_UART_DEBUG >= 23
                 Serial.print(" I");
@@ -130,7 +131,7 @@ void rfm12_poll()
                     //read a byte
                     data = rfm12_read_fifo_inline();
                     
-                    BufferIn(data); // put it to the fifo
+                    RXBufferIn(data); // put it to the fifo
                     
                     #if RFM12_UART_DEBUG >= 23
                     Serial.print(" R");
@@ -148,14 +149,14 @@ void rfm12_poll()
                 
                 //debug
                 #if RFM12_UART_DEBUG >= 23
-                Serial.println('D');
+                Serial.print('D');
                 #endif
                 
                 // FIXME check if bufferLocked is true before switching to STATE_RX_ACTIVE mode
                 
                 NEWRXDATA = true;
                 //process the new packet
-                pktDaemon();
+                //pktDaemon();
                 
                 
                 break;
@@ -174,14 +175,14 @@ void rfm12_poll()
                     {
                         rfm12_data_inline( (RFM12_CMD_TX>>8), SYNC_LSB);
                         synchronization_bytes++;
-                        num_bytes = readBufferIndex(0);
+                        num_bytes = TX_PACKET_LENGTH;
 
                         goto END;
                     }                  
                     if(bytecount < num_bytes) // 0 = length
                     {
                         // Now send Data bytes
-                        BufferOut(&data);      
+                        TXBufferOut(&data);      
                         rfm12_data_inline( (RFM12_CMD_TX>>8), data );
                         bytecount++;
                         //debug
@@ -202,7 +203,7 @@ void rfm12_poll()
                     
                    
                     #if RFM12_UART_DEBUG >= 23
-                    Serial.println('D');
+                    Serial.print('D');
                     #endif
       
                     //turn off the transmitter and enable receiver
@@ -213,6 +214,9 @@ void rfm12_poll()
 
                     //load a dummy byte to clear int status
                     rfm12_data_inline( (RFM12_CMD_TX>>8), 0xaa);
+		    
+		     // reset the busy bool, sending is possible again
+		 //   TX_BUSY = false;
                     break;          
         }
         
@@ -235,8 +239,7 @@ void rfm12_poll()
 #define STATUS_COMPLETE 2
 
 // use it to send packets
-bool rfm12_tick(void)
-{   
+bool rfm12_tick(void) {   
     //collision detection is enabled by default
     #if !(RFM12_NOCOLLISIONDETECTION)
     uint16_t status;
@@ -291,7 +294,8 @@ bool rfm12_tick(void)
     {
         //yes: reset free counter and return
         channel_free_count = CHANNEL_FREE_TIME;
-//         PHY_CHANNEL_FREE = false;// FIXME HACK
+	PHY_CHANNEL_FREE = false;
+	//Serial.println ("B");
         return false;
     }
     
@@ -305,16 +309,15 @@ bool rfm12_tick(void)
     }
     
     //if we are here the channel is believed to be free
-    PHY_CHANNEL_FREE = true; // FIXME HACK
+    PHY_CHANNEL_FREE = true;
     
     //reset the channel free count for the next decrement (during the next call..)
     channel_free_count = 1;
     #endif  
-//     Serial.print ('§');
+
     //do we have something to transmit?
-    if(txstate == STATUS_OCCUPIED)
-    { //yes: start transmitting
-//     Serial.print ('*');
+    if(txstate == 1) { //yes: start transmitting
+	//     Serial.print ('*');
     //disable the interrupt (as we're working directly with the transceiver now)
     //hint: we could be losing an interrupt here, too
     //we could also disturb an ongoing reception,
@@ -347,7 +350,7 @@ bool rfm12_tick(void)
     //enable the interrupt to continue the transmission
     RFM12_INT_ON();
     }
-    rfm12_poll();// FIXME
+    
     return false;
 }
 /************************
@@ -644,10 +647,8 @@ void rfm12_init(void)
     RFM12_INT_ON(); 
 }
 
-void sendBufferRFM12()
-{    
-    txstate = STATUS_OCCUPIED;
-    Serial.print("rf12");
+void sendBufferRFM12() {    
+    txstate = 1;
 }  
     
     

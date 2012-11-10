@@ -15,7 +15,7 @@
 #include "WProgram.h"
 #include "packetDef.h"
 #include "mac.h"
-#include "fifo.h"
+#include "buffer.h"
 
 // global driver variables
 #include "../rxtx_driver.h"

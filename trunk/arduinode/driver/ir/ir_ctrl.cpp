@@ -56,7 +56,7 @@ void IR_enableIROut(int khz) {
   // The top value for the timer.  The modulation frequency will be SYSCLOCK / 2 / OCR2A.
   OCR2A = SYSCLOCK / 2 / khz / 1000;
   OCR2B = OCR2A / 3; // 33% duty cycle
-  BufferIn(STARTSYMBOL);
+  TXBufferIn(STARTSYMBOL);
 }
 
 /************************************************************************
@@ -203,7 +203,7 @@ carrierSense();		// update the PHY_CHANNEL_FREE flag
 
   if(NEWBYTERECEIVED){
 //     proto_rcvPkt(&pt_rcvPkt);
-    BufferIn( RXbyte());
+    RXBufferIn( RXbyte());
   }
 }
 
@@ -227,14 +227,14 @@ static int proto_rcvPkt(struct pt *pt) {
     
     PT_WAIT_UNTIL(pt, NEWBYTERECEIVED);	// FIXME ??? a blocking condition??
     NEWBYTERECEIVED = false;
-    BufferIn(RXbyte()); // length byte
+    RXBufferIn(RXbyte()); // length byte
     
     i = 1;
     
     while (i < RX_PACKET_LENGTH && i < RXTX_BUFFER_SIZE) { // FIXME implement timeout 
 			PT_WAIT_UNTIL(pt, NEWBYTERECEIVED);
 // 			rxbuff[i] = RXbyte();                  // get 1 byte from rx isr
-            BufferIn( RXbyte() );
+            RXBufferIn( RXbyte() );
 			NEWBYTERECEIVED = false;
 			i++;
   }

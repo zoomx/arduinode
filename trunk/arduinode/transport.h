@@ -13,13 +13,12 @@
 
 #include "routing.h"
 #include "packetDef.h"
-#include "fifo.h"
+#include "buffer.h"
 
-extern unsigned char NEWDATA;
-extern unsigned char PINGED;
-extern bool NEWRXDATA;
+volatile extern unsigned char NEWDATA, NEWACK, NEWCTS, PINGED;
+volatile extern unsigned char NEWPACKETRECEIVED, NEWRXDATA;
 
-
-void pktDaemon();
-
+bool pktDaemon();
+void manageNetwork();
+void printPacketStatus();
 #endif

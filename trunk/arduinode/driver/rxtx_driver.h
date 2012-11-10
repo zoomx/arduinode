@@ -1,7 +1,7 @@
 #ifndef RXTX_DRIVER_H
 #define RXTX_DRIVER_H
 
-#include "../fifo.h"
+#include "../buffer.h"
 #include "packetDef.h"
 #include "mac.h"
 
@@ -20,7 +20,8 @@
 #endif
 
 
-extern bool NEWPACKETRECEIVED, NODE_IR_ACTIVE, PHY_CHANNEL_FREE;
+volatile extern unsigned char NEWPACKETRECEIVED; 
+extern bool NODE_IR_ACTIVE, PHY_CHANNEL_FREE;
 
 
 

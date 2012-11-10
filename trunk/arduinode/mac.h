@@ -15,6 +15,7 @@
 #include "routing.h"
 #include "packetDef.h"
 #include "config.h"
+#include "transport.h"
 
 extern unsigned int errorCnt, pktCnt;
 extern unsigned char timestamp;
@@ -39,6 +40,8 @@ void closeConnection();
  *  
  ************************************************************************/
 bool sendData(unsigned char *data, unsigned char length);
+
+
 
 /************************************************************************
  *  

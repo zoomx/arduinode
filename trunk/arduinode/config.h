@@ -13,7 +13,7 @@
 #define CONFIG_H
 
 #include "globals.h"
-#include "fifo.h"
+#include "buffer.h"
 
 #define STATUSLEDPIN 7
 
@@ -23,11 +23,14 @@
 
 // config DEBUG level
 #define RAWMODE 0
-#define DEBUGMODUS 1
+#define DEBUGMODUS 0
 #define BYTEDEBUGMODUS 0
-#define CONNECTDEBUGMODUS 1
-#define BUFFERDEBUG 1
-
+#define CONNECTDEBUGMODUS 0
+#define BUFFERDEBUG 0
+#define IDDEBUG 0
+#define DATADEBUG 1
+#define PRINTPACKETSTATS 1
+	   
 #define MASTER 1
 #define SLAVE 0
 
@@ -38,7 +41,7 @@
  ************************************************************************/
 #define USESTATICID 0
 
-#if RAWMODE || DEBUGMODUS || BYTEDEBUGMODUS || CONNECTDEBUGMODUS
+#if RAWMODE || DEBUGMODUS || BYTEDEBUGMODUS || CONNECTDEBUGMODUS || BUFFERDEBUG || IDDEBUG || DATADEBUG
 #define SERIALCONSOLE 1
 #else
 #define SERIALCONSOLE 0
