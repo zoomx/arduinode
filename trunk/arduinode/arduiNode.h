@@ -10,30 +10,34 @@
 
 #ifndef ARDUINODE_H
 #define ARDUINODE_H
+#include "includes.h"
 
+#include <stdint.h>
+#include <avr/io.h>
+#include <avr/interrupt.h>
+#include <avr/signal.h>
+#include <stdlib.h>
+#include "scheduler.h"
+#include <../pt/pt.h>
+//#include "../pt/pt.h"	// FIXME
+           
+
+#include "routing.h"
 #include "driver/rxtx_driver.h"
 
-#include "globals.h"
-#include "config.h"
-#include "phy.h"
-#include "mac.h"
-#include "routing.h"
-#include "transport.h"
-#include "scheduler.h"
 
-
-extern bool NODE_IR_ACTIVE, PHY_CHANNEL_FREE;
+extern uint8_t NODE_IR_ACTIVE, PHY_CHANNEL_FREE;
 
 
 /************************************************************************
- * initialization of the arduiNode, call this once in setup() 		*
- * the argument has to be MASTER or SLAVE				*
+ * initialization of the arduiNode, call this once in setup() 		 
+ * the argument has to be MASTER or SLAVE				 
  * you should make sure to have only 1 master per net
  ************************************************************************/
 void arduiNodeSetup(unsigned char NODETYPE);
 
 /************************************************************************
- * turn the status led on or off					*
+ * turn the status led on or off					 
  ************************************************************************/
 void statusLED(unsigned char led);
 void arduiNodeSetID(unsigned char id);

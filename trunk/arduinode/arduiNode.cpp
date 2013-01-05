@@ -9,18 +9,18 @@
  */
 
 #include "arduiNode.h"
-
-boolean NODETYPE;
-
-
+#include "includes.h"
+uint8_t NODETYPE;
+#include "driver/rfm12/rfm12.h"  // FIXME 
 
 // driver stuff
 // static struct pt pt_rcvPkt;
 
 // Global variables for the driver
-bool NODE_IR_ACTIVE, PHY_CHANNEL_FREE;
+uint8_t NODE_IR_ACTIVE, PHY_CHANNEL_FREE = true;
+volatile unsigned long PHY_CHANNEL_BUSY_TIME;
 
-void arduiNodeSetup(boolean NODETYP) {
+void arduiNodeSetup(uint8_t NODETYP) {
   NODETYPE = NODETYP;
   IR_INIT_PT_RCV();		// init proto rcv var called in isr
   init_pt_snd();		// init proto snd var...
@@ -53,7 +53,8 @@ void arduiNodeSetup(boolean NODETYP) {
   
   RXTX_DRIVER_INIT();
   
-  setupScheduler();
+  //setupScheduler();
+  
 }
 
 void arduiNodeSetID(unsigned char id) {

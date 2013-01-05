@@ -1,9 +1,7 @@
 #ifndef RXTX_DRIVER_H
 #define RXTX_DRIVER_H
 
-#include "../buffer.h"
-#include "packetDef.h"
-#include "mac.h"
+#include "../includes.h"
 
 
 // choose the driver to use
@@ -21,7 +19,7 @@
 
 
 volatile extern unsigned char NEWPACKETRECEIVED; 
-extern bool NODE_IR_ACTIVE, PHY_CHANNEL_FREE;
+extern uint8_t NODE_IR_ACTIVE, PHY_CHANNEL_FREE;
 
 
 

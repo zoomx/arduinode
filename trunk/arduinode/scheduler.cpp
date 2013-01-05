@@ -9,9 +9,9 @@
  */
 
 #include "scheduler.h"
+#include "includes.h"
 
-
-#define SCHED_SLOT_SIZE 3
+#define SCHED_SLOT_SIZE 2
 
 typedef struct{
 	volatile unsigned long timer;
@@ -20,11 +20,12 @@ typedef struct{
 } slots;
 
 slots schedSlots[SCHED_SLOT_SIZE];
+
 volatile unsigned long schedCnt;
-byte schedSlot = 0;
+char schedSlot = 0;
 
 
-void setupScheduler() {
+//void setupScheduler() {
 	//~ cli();//stop interrupts
 
 	//~ //set timer1 interrupt at 10Hz
@@ -41,7 +42,7 @@ void setupScheduler() {
 	//~ TIMSK1 |= (1 << OCIE1A);
 
 	//~ sei();//allow interrupts
-}
+//}
 
 
 void addToScheduler(void (*f)(), int dsIntervall) {
@@ -53,14 +54,29 @@ void addToScheduler(void (*f)(), int dsIntervall) {
 	schedSlots[schedSlot].timer = schedCnt + schedSlots[schedSlot].preload;
 	schedSlot++;
 }
-unsigned long scheduleT;
-//ISR(TIMER1_COMPA_vect){
+
+//ISR(TIMER1_COMPA_vect){	// for scheduler with interupt, not recomended
 void schedule() {
+	cli();
 	schedCnt = millis();
-	for(byte i=0; i<SCHED_SLOT_SIZE; i++) {
-		if(schedCnt == schedSlots[i].timer) {
+
+	for(char i=0; i<SCHED_SLOT_SIZE; i++) {
+		if(schedSlots[i].fname == 0) {
+			break;
+		}
+		if(schedCnt >= schedSlots[i].timer) {
 			schedSlots[i].timer = schedCnt + schedSlots[i].preload;
 			schedSlots[i].fname();
+		}
+	}
+	sei();
+}
+
+void reScheduleEvent(void (*f)(), int msIntervall){
+	for(char i=0; i<SCHED_SLOT_SIZE; i++) {
+		if(f == schedSlots[i].fname) {
+			schedSlots[i].timer = schedCnt + msIntervall;
+			return;
 		}
 	}
 }

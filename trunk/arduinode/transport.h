@@ -11,14 +11,12 @@
 #ifndef transport.h
 #define transport.h
 
-#include "routing.h"
-#include "packetDef.h"
-#include "buffer.h"
+#include "includes.h"
 
 volatile extern unsigned char NEWDATA, NEWACK, NEWCTS, PINGED;
 volatile extern unsigned char NEWPACKETRECEIVED, NEWRXDATA;
 
-bool pktDaemon();
+uint8_t pktDaemon();
 void manageNetwork();
 void printPacketStatus();
 #endif

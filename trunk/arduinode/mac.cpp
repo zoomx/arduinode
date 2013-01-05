@@ -10,12 +10,6 @@
 
 #include "mac.h"
 
-#define SD_IDLE			0
-#define SD_SEND_RTS		1
-#define SD_AWAITNG_CTS		2
-#define SD_SEND_DATA	  	3
-#define SD_AWAITING_ACK   	4
-char SD_STATE;
 
 static struct pt pt_relPktSend;
 
@@ -31,10 +25,9 @@ void closeConnection() {
 
 
 void sendHeader(unsigned char length, unsigned char toAddr, unsigned char type) {
-// 	if(!CSMA_channel_free()) return;	// FIXME HACK for RF12
+
 	enableIROut(38);
-// 	PORTB |= 1;			// led on
-// 	BufferIn(STARTSYMBOL);
+
 	TXBufferIn(length);		// pkt length info add +4 bytes for the header overhead!
 	TXBufferIn(toAddr);
 	TXBufferIn(myself.id);
@@ -78,19 +71,17 @@ bool sendData(unsigned char *dat, unsigned char length) {
 		pktRetry = 0;
 		pktCnt++;
 		pktACKed = false;
-	//	SD_STATE = SD_SEND_RTS;
 		while(!pktACKed && pktRetry < PKTRETRY) {
 			macProtoSendReliablePacket(&pt_relPktSend, dat, length);	
-		//	sendData2( dat, length);	
 		}
 		if(pktRetry >= PKTRETRY) { // max retries exceeded
 			nextNodes[0].id = 0;	// delete this id
 			mangageNextNodes(0, 255);	// update node table after deleting id 0
 			errorCnt++;	// update the error count for the pkt stats
-			//~ #if DATADEBUG
-			//~ Serial.print(" delID");
-			//~ Serial.println(nextNodes[0].id, DEC);
-			//~ #endif
+			#if DATADEBUG
+			Serial.print(" delID");
+			Serial.println(nextNodes[0].id, DEC);
+			#endif
 			#if DATADEBUG
 			Serial.print(" sendERROR");
 			#endif	
@@ -115,7 +106,7 @@ static int macProtoSendReliablePacket(struct pt *pt, unsigned char *dat, unsigne
 		#if DATADEBUG
 		Serial.println(" CHN BLK");
 		#endif
-		PT_EXIT(pt);
+		PT_RESTART(pt);
 	}
 	#if DATADEBUG
 	if(pktRetry == 0) {	// only print once
@@ -134,7 +125,6 @@ static int macProtoSendReliablePacket(struct pt *pt, unsigned char *dat, unsigne
 	//tstamp = millis();       //FIXME
 	NEWCTS = false;
 	PT_WAIT_UNTIL(pt, (pktDaemon() || RXTX_TICK() || NEWCTS || millis() - tstamp > PKTTIMEOUT) );	//FIXME should not block
-Serial.print("#");	
 	NEWCTS = false;
 	if(millis() - tstamp > PKTTIMEOUT) {		// wrong answer or timeout detected
 		pktRetry++;
@@ -145,7 +135,7 @@ Serial.print("#");
 		PT_EXIT(pt);			// restart transmission          PT_RESTART(pt)
 
 	}     
-	#if DATADEBUG
+	#if DATADEBUG2
 	 else {
 		Serial.print(" ->cts");
 	 }
@@ -161,7 +151,7 @@ Serial.print("#");
 	//tstamp = millis();           //FIXME
 	NEWACK = false; 
 	PT_WAIT_UNTIL(pt, (pktDaemon() || RXTX_TICK() || NEWACK || millis() - tstamp > PKTTIMEOUT)  );	//FIXME should not block
-Serial.print("*");
+
 	if(millis() - tstamp > PKTTIMEOUT){
 		pktRetry++;
 		#if DATADEBUG

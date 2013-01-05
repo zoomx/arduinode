@@ -13,13 +13,15 @@
 #include "rfm12.h"
 #include "../rxtx_driver.h"
 
+extern volatile unsigned long PHY_CHANNEL_BUSY_TIME;
+
 
 #define RXTX_DRIVER_INIT() { rfm12_init();  NODE_IR_ACTIVE = 0;}
 
 #define RXTX_TICK() rfm12_tick()
 
 // nothing to do here
-#define enable_IR_rx(); 
+#define enable_IR_rx(); //FIXME why ';' ?
 // nothing to do here
 #define IR_INIT_PT_RCV() 
 
@@ -37,7 +39,6 @@
 #define INT_ON()  (attachInterrupt(0, rfm12_poll, FALLING))
 
 #endif
-
 
 // /*
 // 

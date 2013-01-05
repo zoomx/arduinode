@@ -1,7 +1,7 @@
-#ifndef FIFO_H
-#define FIFO_H
+#ifndef BUFFER_H
+#define BUFFER_H
 
-#include "WProgram.h"
+#include "includes.h"
 
 #define RXTX_BUFFER_SIZE 16 // muss 2^n betragen (8, 16, 32, 64 ...)
 #define RXTX_BUFFER_MASK (RXTX_BUFFER_SIZE-1) // Klammern auf keinen Fall vergessen
@@ -9,13 +9,13 @@
 #define DATA_BUFFER_SIZE 16
 
 #define RX_PACKET_LENGTH 	readBufferIndex(0, RXBUFFER)
-#define RX_NODE_TO                readBufferIndex(1, RXBUFFER)
+#define RX_NODE_TO          readBufferIndex(1, RXBUFFER)
 #define RX_NODE_FROM		readBufferIndex(2, RXBUFFER)
 #define RX_PACKETTYPE		readBufferIndex(3, RXBUFFER)
 #define RX_DATABYTE_1		readBufferIndex(4, RXBUFFER)
 
 #define TX_PACKET_LENGTH 	readBufferIndex(0, TXBUFFER)
-#define TX_NODE_TO                readBufferIndex(1, TXBUFFER)
+#define TX_NODE_TO          readBufferIndex(1, TXBUFFER)
 #define TX_NODE_FROM		readBufferIndex(2, TXBUFFER)
 #define TX_PACKETTYPE 		readBufferIndex(3, TXBUFFER)
 

@@ -12,8 +12,7 @@
 #define PHY_H
 
 
-#include "globals.h"
-#include "config.h"
+#include "includes.h"
 
 
 #define STARTSYMBOL 0xAA

@@ -57,7 +57,7 @@
 
 #endif
 
-#define RFM12_UART_DEBUG   23
+
 #define RFM12_NOCOLLISIONDETECTION 0
 
 //! This controls the library internal state machine.
@@ -111,7 +111,7 @@ void rfm12_poll()
                 // FIXME check if buffer free
                 RXBufferIn(num_bytes);    // put it to the fifo
 
-                #if RFM12_UART_DEBUG >= 23
+                #if RFM12_UART_DEBUG
                 Serial.print(" I");
                 Serial.print(num_bytes, DEC);
                 #endif
@@ -133,7 +133,7 @@ void rfm12_poll()
                     
                     RXBufferIn(data); // put it to the fifo
                     
-                    #if RFM12_UART_DEBUG >= 23
+                    #if RFM12_UART_DEBUG
                     Serial.print(" R");
                     Serial.print(data, DEC);
                     #endif
@@ -148,7 +148,7 @@ void rfm12_poll()
                 /* the fifo will be reset at the end of the function */
                 
                 //debug
-                #if RFM12_UART_DEBUG >= 23
+                #if RFM12_UART_DEBUG
                 Serial.print('D');
                 #endif
                 
@@ -186,11 +186,12 @@ void rfm12_poll()
                         rfm12_data_inline( (RFM12_CMD_TX>>8), data );
                         bytecount++;
                         //debug
-                        #if RFM12_UART_DEBUG >= 23
+                        #if RFM12_UART_DEBUG
                         Serial.print(" T");
                         Serial.print(data, DEC);
                         #endif
-                        //Serial.println("bytes");end the interrupt without resetting the fifo
+                        
+                        //end the interrupt without resetting the fifo
                         goto END;
                    }
                    if(dummyByte == 0) { // send 1 byte more to avoid data coruption of the last byte
@@ -202,7 +203,7 @@ void rfm12_poll()
                     /* the fifo will be reset at the end of the function */
                     
                    
-                    #if RFM12_UART_DEBUG >= 23
+                    #if RFM12_UART_DEBUG
                     Serial.print('D');
                     #endif
       
@@ -215,8 +216,6 @@ void rfm12_poll()
                     //load a dummy byte to clear int status
                     rfm12_data_inline( (RFM12_CMD_TX>>8), 0xaa);
 		    
-		     // reset the busy bool, sending is possible again
-		 //   TX_BUSY = false;
                     break;          
         }
         
@@ -239,16 +238,16 @@ void rfm12_poll()
 #define STATUS_COMPLETE 2
 
 // use it to send packets
-bool rfm12_tick(void) {   
+uint8_t rfm12_tick() {   
     //collision detection is enabled by default
     #if !(RFM12_NOCOLLISIONDETECTION)
     uint16_t status;
     
     //start with a channel free count of 16, this is necessary for the ASK receive feature to work
-    static uint8_t channel_free_count = 16; //static local variables produce smaller code size than globals
+    //static uint8_t channel_free_count = 16; //static local variables produce smaller code size than globals
     #endif
     
-    //debug
+    /** debug
     #if RFM12_UART_DEBUG > 23
     static uint8_t oldstate = 23;
     uint8_t state = rfm12_state;
@@ -273,10 +272,17 @@ bool rfm12_tick(void) {
         oldstate = state;
     }
     #endif
+    **/
     
     //don't disturb RFM12 if transmitting or receiving
-    if(rfm12_state != STATE_RX_IDLE)
-    {
+    if(rfm12_state != STATE_RX_IDLE) 
+    { 
+		//Serial.print ("?");
+		//if(millis() - PHY_CHANNEL_BUSY_TIME > PHY_CHANNEL_FREE_RESET_TIME) {	// reset connection because of problem
+			//rfm12_state = STATE_RX_IDLE;
+			//PHY_CHANNEL_FREE = true;
+			//Serial.print ("RST STATE");
+		//}
         return false;
     }   
     
@@ -287,32 +293,42 @@ bool rfm12_tick(void) {
     //solutions: check status flag if int is set, launch int and exit ... OR implement packet retransmission
     RFM12_INT_OFF();    
     status = rfm12_read(RFM12_CMD_STATUS);
+    //delay(1);
     RFM12_INT_ON();
     
     //check if we see a carrier
     if(status & RFM12_STATUS_RSSI)
     {
         //yes: reset free counter and return
-        channel_free_count = CHANNEL_FREE_TIME;
-	PHY_CHANNEL_FREE = false;
-	//Serial.println ("B");
+        //channel_free_count = CHANNEL_FREE_TIME;
+        
+        // update the anti colision timer
+        PHY_CHANNEL_BUSY_TIME = millis();
+        
+		PHY_CHANNEL_FREE = false;
         return false;
     }
     
     //no: decrement counter
-    channel_free_count--;
+    //channel_free_count--;
     
     //is the channel free long enough ?
+    /**
     if(channel_free_count != 0)
     {
         return false;
+    }
+    **/
+    if(millis() - PHY_CHANNEL_BUSY_TIME < PHY_CHANNEL_FREE_TIME) {
+				//Serial.println ("B");
+		return false;
     }
     
     //if we are here the channel is believed to be free
     PHY_CHANNEL_FREE = true;
     
     //reset the channel free count for the next decrement (during the next call..)
-    channel_free_count = 1;
+    //channel_free_count = 1;
     #endif  
 
     //do we have something to transmit?

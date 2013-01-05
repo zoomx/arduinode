@@ -13,23 +13,20 @@
 
 
 
-#include <avr/io.h>
-#include <avr/interrupt.h>
-#include <avr/signal.h>
-#include <stdlib.h>
-//#include <../pt/pt.h>
-#include "../pt/pt.h"	// FIXME
-#include "config.h"
-
 #define CLR(x,y) (x&=(~(1<<y)))
 #define SET(x,y) (x|=(1<<y))
 
+typedef struct {
+	unsigned char id;
+	unsigned char htm;
+}
+node;
+//	the node table used to manage the neighbour nodes
+extern node nextNodes[];
+
 
 extern unsigned char NODETYPE;
-// extern unsigned char rxbuff[], txbuff[], RX_PACKETTYPE;
-// // extern bool NEWPACKETRECEIVED;
-// extern bool PHY_CHANNEL_FREE;
-// extern bool NODE_IR_ACTIVE;
+
 
 
 

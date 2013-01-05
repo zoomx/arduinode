@@ -11,11 +11,9 @@
 #ifndef routing.h
 #define routing.h
 
-#include "mac.h"
-#include "packetDef.h"
+#include "includes.h"
 
-//	the node table used to manage the neighbour nodes
-extern node nextNodes[];
+
 
 //	update the node table and sort it smallest htm first.
 void mangageNextNodes(unsigned char id, unsigned char htm) ;

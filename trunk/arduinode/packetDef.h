@@ -11,19 +11,17 @@
 #ifndef packetDef.h
 #define packetDef.h
 
-#include "config.h"
+#include "includes.h"
 
-typedef struct {
-	unsigned char id;
-	unsigned char htm;
-}
-node;
+
 
 extern unsigned char MASTERNODE;
 
-#define PKTTIMEOUT 500		// how many ms to wait for an ACK before resending the pkt
-#define PKTRETRY 2		// how many times to retry until to delete this node from the node table
-#define BROADCASTADDR 255	// BEACONS use this, this goes out to every node
+#define PHY_CHANNEL_FREE_TIME 10	// how many ms the channel has to be free to set PHY_CHANNEL_FREE = true
+#define PHY_CHANNEL_FREE_RESET_TIME 500 // how many ms to reset connection state 
+#define PKTTIMEOUT 500				// how many ms to wait for an ACK before resending the pkt
+#define PKTRETRY 2					// how many times to retry until to delete this node from the node table
+#define BROADCASTADDR 255			// BEACONS use this, this goes out to every node
 
 
 /******** Packet organisation *************************************************************************

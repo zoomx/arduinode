@@ -9,9 +9,11 @@
  */
 
 #include "routing.h"
+
 #define NODE_TABLE_SIZE 5
 
 node nextNodes[NODE_TABLE_SIZE];
+
 void mangageNextNodes(unsigned char id, unsigned char htm) {
   // id=0 -> place in table is empty!
   unsigned char swapped;
@@ -63,7 +65,6 @@ void mangageNextNodes(unsigned char id, unsigned char htm) {
 
 
 void printNodes() { 
-  Serial.println();
   for(unsigned char i = 0; i < NODE_TABLE_SIZE; i++) {
     Serial.print(" id: ");
     Serial.print(nextNodes[i].id, DEC);		

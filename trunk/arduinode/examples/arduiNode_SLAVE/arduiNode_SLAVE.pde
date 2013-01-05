@@ -12,13 +12,14 @@
 
 #include <arduiNode.h>
 
-/** open the config file in an editor it is in the libraries/arduinode folder **/
-#include "config.h" 
-
+/** open the config.h file in an editor it is in the libraries/arduinode folder **/
 
 void setup() {
   Serial.begin(57600);
-  arduiNodeSetup(SLAVE);        // initialize the arduiNode library
+  arduiNodeSetup(SLAVE);	// initialize the arduiNode library
+
+  addToScheduler(printPacketStatus, 10000); // print send packet stats every 10s
+  addToScheduler(manageNetwork, 3000); 		// send BEACON frame every 3s
 }
 
 unsigned char tx[5] = {
@@ -26,12 +27,21 @@ unsigned char tx[5] = {
 unsigned long t;
 
 void loop() {
-  pktDaemon();        // call this function frequently, it manages all protocol logic
-  rf12_getData();     // call this often if you use the rfm12 driver
+
+  // arduiNode logic, needs to be called constantly.
+  pktDaemon();
+  RXTX_TICK();
+  schedule();
+
+
   if(millis() - t > 3000) { // send data every 3000ms
-    t= millis();
-    if(sendData(tx, 5)) {
+    if(sendData(tx, 5)) { 	// returns true if the DATA packet was ACKed
       Serial.println("data was send..");
     }
+    else {
+      Serial.println("Couln't send data!");
+    }
+    t= millis();
   }
 }
+

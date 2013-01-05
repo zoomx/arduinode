@@ -11,11 +11,8 @@
 #ifndef MAC_H
 #define MAC_H
 
-#include "phy.h"
-#include "routing.h"
-#include "packetDef.h"
-#include "config.h"
-#include "transport.h"
+#include "includes.h"
+
 
 extern unsigned int errorCnt, pktCnt;
 extern unsigned char timestamp;

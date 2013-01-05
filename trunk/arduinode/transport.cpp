@@ -1,5 +1,5 @@
 /* 
-* Copyright (c) 2011, Jan Clement
+* Copyright (c) 2012, Jan Clement
 * licenced under the GPL
 *
 * Author: Jan Clement <jan.clement@audiokits.de>
@@ -9,8 +9,6 @@
 */
 
 #include "transport.h"
-#include "driver/rxtx_driver.h"
-
 
 
 volatile unsigned char NEWRXDATA, NEWPACKETRECEIVED, NEWDATA, PINGED, NEWACK, NEWCTS;
@@ -22,7 +20,7 @@ volatile unsigned char NEWRXDATA, NEWPACKETRECEIVED, NEWDATA, PINGED, NEWACK, NE
 *****************************************************************************/
 static unsigned long pdt, rsttime;	// packet deamon time
 static unsigned char dataToSend;
-bool pktDaemon() {
+uint8_t pktDaemon() {
    INT_OFF();  // makro all interrupts are deactivated
 
 
@@ -54,7 +52,6 @@ if(NEWPACKETRECEIVED) { 	// FIXME check if pkt is valid
             #if CONNECTDEBUGMODUS
             Serial.print(" ->RTS");
             #endif
-	   // delay(5);	// FIXME
             sendHeader(4, RX_NODE_FROM, CTS);	// answer with a CTS pkt
 	    	SENDBUFFER();
 	    #if CONNECTDEBUGMODUS
@@ -80,7 +77,6 @@ if(NEWPACKETRECEIVED) { 	// FIXME check if pkt is valid
             #if CONNECTDEBUGMODUS
             Serial.print(" ->DATA");
             #endif
-            //delay(5);	// FIXME
             sendHeader(4, RX_NODE_FROM, ACK);	// answer with an ACK pkt
 	    SENDBUFFER();
 	    #if CONNECTDEBUGMODUS
@@ -116,14 +112,14 @@ if(NEWPACKETRECEIVED) { 	// FIXME check if pkt is valid
                  timestamp = millis();
             }
             mangageNextNodes(RX_NODE_FROM, RX_DATABYTE_1);
-            #if CONNECTDEBUGMODUS
+            #if SHOWBEACONS
             Serial.print(" ->BC[");
             Serial.print(RX_NODE_FROM, DEC);		
             Serial.print("|");
             Serial.print(RX_DATABYTE_1, DEC);
             Serial.println("]");
-	    #endif
-	    #if IDDEBUG
+			#endif
+			#if PRINTNODETABLE
             printNodes();
             #endif
         break;
@@ -219,14 +215,15 @@ if(NEWPACKETRECEIVED) { 	// FIXME check if pkt is valid
 
 void manageNetwork() {// send beacon or INID 
 	if(!PHY_CHANNEL_FREE) {
-		Serial.print("CHNBSY");
-		return;
+		reScheduleEvent(manageNetwork, 10);
+		Serial.print(" CHNBSY");
+		goto END;
 	}
 	if(myself.id) {	// node has a valid ID, send a beacon
 		sendHeader(5, BROADCASTADDR, BEACON);
 		TXBufferIn(myself.htm);
 		SENDBUFFER();
-		#if CONNECTDEBUGMODUS
+		#if SHOWBEACONS
 		Serial.print(" <-BC");
 		Serial.print("<");
 		Serial.print(myself.id,DEC);
@@ -268,7 +265,7 @@ void manageNetwork() {// send beacon or INID
             #endif
            }
         }
-        #if DEBUGMODUS
+        #if SHOWBEACONS
         if(myself.htm == 255) {
         	Serial.println(" noNodes");
         }
@@ -283,10 +280,13 @@ void manageNetwork() {// send beacon or INID
 	//~ enable_IR_rx();
  	//~ NODE_IR_ACTIVE = false;
     //~ }
-
+    
+	END:
+	return;
 }
 
 void printPacketStatus() {
+	Serial.print(" PKTSTATS");
             #if PRINTPACKETSTATS
             Serial.print(" pktCnt:");
             Serial.print(pktCnt);	

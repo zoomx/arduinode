@@ -12,8 +12,7 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#include "globals.h"
-#include "buffer.h"
+#include "includes.h"
 
 #define STATUSLEDPIN 7
 
@@ -25,12 +24,16 @@
 #define RAWMODE 0
 #define DEBUGMODUS 0
 #define BYTEDEBUGMODUS 0
-#define CONNECTDEBUGMODUS 0
+#define CONNECTDEBUGMODUS 1
 #define BUFFERDEBUG 0
-#define IDDEBUG 0
+#define IDDEBUG 1
 #define DATADEBUG 1
+#define SHOWBEACONS 1
 #define PRINTPACKETSTATS 1
-	   
+#define PRINTNODETABLE 0
+
+#define RFM12_UART_DEBUG 0
+
 #define MASTER 1
 #define SLAVE 0
 

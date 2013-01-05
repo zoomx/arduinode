@@ -2,16 +2,17 @@
 #define RF12_H
 
 // arduino core 
-#include "WProgram.h"
+#include "../../includes.h"
 
 // global driver variables
 #include "../rxtx_driver.h"
 
 
+void sendBufferRFM12();
 
 void rfm12_poll();
 
-bool rfm12_tick();
+uint8_t rfm12_tick();
 
 void rfm12_sendData(uint8_t *data, uint8_t length);
 
@@ -28,7 +29,5 @@ uint8_t rfm12_read_fifo_inline();
 void rfm12_data_inline(uint8_t cmd, uint8_t d);
 
 void printStatus();
-
-void sendBufferRFM12(void);
 
 #endif

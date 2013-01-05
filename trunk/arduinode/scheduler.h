@@ -10,14 +10,15 @@
 
 #ifndef SCHEDULER_H
 #define SCHEDULER_H
+   
 
-#include "globals.h"
-#include "config.h"
 
-void setupScheduler();
+//void setupScheduler();
 
 
 void addToScheduler(void (*f)(), int msIntervall);
 
 void schedule();
+
+void reScheduleEvent(void (*f)(), int msIntervall);
 #endif
