@@ -11,14 +11,14 @@
 #ifndef SCHEDULER_H
 #define SCHEDULER_H
    
-
+#include "includes.h"
 
 //void setupScheduler();
 
 
-void addToScheduler(void (*f)(), int msIntervall);
+void addToScheduler(void (*f)(), uint16_t msIntervall);
 
 void schedule();
 
-void reScheduleEvent(void (*f)(), int msIntervall);
+void reScheduleEvent(void (*f)(), uint16_t msIntervall);
 #endif

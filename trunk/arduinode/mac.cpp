@@ -66,7 +66,7 @@ unsigned char pktRetry, pktACKed;
 unsigned int errorCnt, pktCnt;	// FIXME count and calc packet statistics
 
 // wrapper for macProtoSendReliablePacket()
-bool sendData(unsigned char *dat, unsigned char length) {
+uint8_t sendData(unsigned char *dat, unsigned char length) {
 	if(myself.id && myself.htm != 255) {	// i have an id and neigbhour nodes
 		pktRetry = 0;
 		pktCnt++;

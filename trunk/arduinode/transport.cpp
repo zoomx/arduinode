@@ -18,8 +18,7 @@ volatile unsigned char NEWRXDATA, NEWPACKETRECEIVED, NEWDATA, PINGED, NEWACK, NE
 * packet type and the corresponding functions to process the given event    *
 * are called. Handles all the protocol logic                                *
 *****************************************************************************/
-static unsigned long pdt, rsttime;	// packet deamon time
-static unsigned char dataToSend;
+static unsigned long rsttime;	// packet deamon time
 uint8_t pktDaemon() {
    INT_OFF();  // makro all interrupts are deactivated
 

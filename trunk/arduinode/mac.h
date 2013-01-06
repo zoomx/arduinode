@@ -36,7 +36,7 @@ void closeConnection();
 /************************************************************************
  *  
  ************************************************************************/
-bool sendData(unsigned char *data, unsigned char length);
+uint8_t sendData(unsigned char *data, unsigned char length);
 
 
 

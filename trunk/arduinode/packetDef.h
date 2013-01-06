@@ -8,8 +8,8 @@
  * http://code.google.com/p/arduinode/
  */
 
-#ifndef packetDef.h
-#define packetDef.h
+#ifndef PACKETDEF_H
+#define PACKETDEF_H
 
 #include "includes.h"
 

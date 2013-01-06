@@ -15,7 +15,7 @@
 
 typedef struct{
 	volatile unsigned long timer;
-	unsigned int preload;
+    uint16_t preload;
 	void (*fname)();	// function to be called
 } slots;
 
@@ -45,7 +45,7 @@ char schedSlot = 0;
 //}
 
 
-void addToScheduler(void (*f)(), int dsIntervall) {
+void addToScheduler(void (*f)(), uint16_t dsIntervall) {
 	if(schedSlot == SCHED_SLOT_SIZE) {
 		return;
 	}
@@ -72,7 +72,7 @@ void schedule() {
 	sei();
 }
 
-void reScheduleEvent(void (*f)(), int msIntervall){
+void reScheduleEvent(void (*f)(), uint16_t msIntervall){
 	for(char i=0; i<SCHED_SLOT_SIZE; i++) {
 		if(f == schedSlots[i].fname) {
 			schedSlots[i].timer = schedCnt + msIntervall;

@@ -8,8 +8,8 @@
  * http://code.google.com/p/arduinode/
  */
 
-#ifndef routing.h
-#define routing.h
+#ifndef ROUTING_H
+#define ROUTING_H
 
 #include "includes.h"
 

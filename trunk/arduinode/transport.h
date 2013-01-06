@@ -8,8 +8,8 @@
  * http://code.google.com/p/arduinode/
  */
 
-#ifndef transport.h
-#define transport.h
+#ifndef TRANSPORT_H
+#define TRANSPORT_H
 
 #include "includes.h"
 
