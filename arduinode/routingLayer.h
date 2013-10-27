@@ -11,7 +11,7 @@
 #ifndef routing.h
 #define routing.h
 
-#include "mac.h"
+#include "macLayer.h"
 #include "packetDef.h"
 
 //	the node table used to manage the neighbour nodes
